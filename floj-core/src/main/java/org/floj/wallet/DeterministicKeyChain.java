@@ -739,7 +739,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             DeterministicKey key = (DeterministicKey) entry.getKey();
             Protos.Key.Builder proto = entry.getValue();
             proto.setType(Protos.Key.Type.DETERMINISTIC_KEY);
-            final Protos.DeterministicKey.Builder detKey = proto.getDeterministicKeyBuilder();
+            final Protos.DeterministicKey.Builder detKey = Protos.DeterministicKey.newBuilder();
             detKey.setChainCode(ByteString.copyFrom(key.getChainCode()));
             for (ChildNumber num : key.getPath())
                 detKey.addPath(num.i());
@@ -756,6 +756,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             if (entries.isEmpty() && isFollowing()) {
                 detKey.setIsFollowing(true);
             }
+            proto.setDeterministicKey(detKey);
             if (key.getParent() != null) {
                 // HD keys inherit the timestamp of their parent if they have one, so no need to serialize it.
                 proto.clearCreationTimestamp();
@@ -1270,9 +1271,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         // the seed.
         if (seed.isEncrypted() && seed.getEncryptedSeedData() != null) {
             EncryptedData data = seed.getEncryptedSeedData();
-            proto.getEncryptedDeterministicSeedBuilder()
+            proto.setEncryptedData(Protos.EncryptedData.newBuilder()
                     .setEncryptedPrivateKey(ByteString.copyFrom(data.encryptedBytes))
-                    .setInitialisationVector(ByteString.copyFrom(data.initialisationVector));
+                    .setInitialisationVector(ByteString.copyFrom(data.initialisationVector)));
             // We don't allow mixing of encryption types at the moment.
             checkState(seed.getEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES);
         } else {

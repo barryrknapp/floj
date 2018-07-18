@@ -31,7 +31,6 @@ import org.floj.wallet.Protos.Wallet.EncryptionType;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.TextFormat;
 import com.google.protobuf.WireFormat;
 
 import org.slf4j.Logger;
@@ -122,18 +121,6 @@ public class WalletProtobufSerializer {
     public void writeWallet(Wallet wallet, OutputStream output) throws IOException {
         Protos.Wallet walletProto = walletToProto(wallet);
         walletProto.writeTo(output);
-    }
-
-    /**
-     * Returns the given wallet formatted as text. The text format is that used by protocol buffers and although it
-     * can also be parsed using {@link TextFormat#merge(CharSequence, com.google.protobuf.Message.Builder)},
-     * it is designed more for debugging than storage. It is not well specified and wallets are largely binary data
-     * structures anyway, consisting as they do of keys (large random numbers) and {@link Transaction}s which also
-     * mostly contain keys and hashes.
-     */
-    public String walletToText(Wallet wallet) {
-        Protos.Wallet walletProto = walletToProto(wallet);
-        return TextFormat.printToString(walletProto);
     }
 
     /**
@@ -402,7 +389,7 @@ public class WalletProtobufSerializer {
      * Wallet object with {@code forceReset} set {@code true}. It won't work.</p>
      *
      * <p>If {@code forceReset} is {@code true}, then no transactions are loaded from the wallet, and it is configured
-     * to replay transactions from the blockchain (as if the wallet had been loaded and {@link Wallet.reset}
+     * to replay transactions from the blockchain (as if the wallet had been loaded and {@link Wallet#reset()}
      * had been called immediately thereafter).
      *
      * <p>A wallet can be unreadable for various reasons, such as inability to open the file, corrupt data, internally
@@ -451,7 +438,7 @@ public class WalletProtobufSerializer {
      * Wallet object with {@code forceReset} set {@code true}. It won't work.</p>
      *
      * <p>If {@code forceReset} is {@code true}, then no transactions are loaded from the wallet, and it is configured
-     * to replay transactions from the blockchain (as if the wallet had been loaded and {@link Wallet.reset}
+     * to replay transactions from the blockchain (as if the wallet had been loaded and {@link Wallet#reset()}
      * had been called immediately thereafter).
      *
      * <p>A wallet can be unreadable for various reasons, such as inability to open the file, corrupt data, internally
