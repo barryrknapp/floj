@@ -418,7 +418,7 @@ public class PaymentChannelServer {
                 Futures.addCallback(ackInfoFuture, new FutureCallback<ByteString>() {
                     @Override
                     public void onSuccess(@Nullable ByteString result) {
-                        if (result != null) ack.setPaymentAck(ack.getPaymentAckBuilder().setInfo(result));
+                        if (result != null) ack.setPaymentAck(Protos.PaymentAck.newBuilder().setInfo(result));
                         conn.sendToClient(ack.build());
                     }
 
@@ -531,7 +531,7 @@ public class PaymentChannelServer {
                 if (result != null) {
                     // Result can be null on various error paths, like if we never actually opened
                     // properly and so on.
-                    msg.getSettlementBuilder().setTx(ByteString.copyFrom(result.unsafeFLOSerialize()));
+                    msg.setSettlement(Protos.Settlement.newBuilder().setTx(ByteString.copyFrom(result.unsafeFLOSerialize())));
                     log.info("Sending CLOSE back with broadcast settlement tx.");
                 } else {
                     log.info("Sending CLOSE back without broadcast settlement tx.");

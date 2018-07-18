@@ -358,9 +358,10 @@ public class PaymentChannelClient implements IPaymentChannelClient {
                     // Make an initial payment of the dust limit, and put it into the message as well. The size of the
                     // server-requested dust limit was already sanity checked by this point.
                     PaymentChannelClientState.IncrementedPayment payment = state().incrementPaymentBy(Coin.valueOf(minPayment), userKeySetup);
-                    Protos.UpdatePayment.Builder initialMsg = provideContractBuilder.getInitialPaymentBuilder();
+                    Protos.UpdatePayment.Builder initialMsg = Protos.UpdatePayment.newBuilder();
                     initialMsg.setSignature(ByteString.copyFrom(payment.signature.encodeToFLO()));
                     initialMsg.setClientChangeValue(state.getValueRefunded().value);
+                    provideContractBuilder.setInitialPayment(initialMsg);
                 } catch (ValueOutOfRangeException e) {
                     throw new IllegalStateException(e);  // This cannot happen.
                 }
@@ -399,9 +400,10 @@ public class PaymentChannelClient implements IPaymentChannelClient {
             // Make an initial payment of the dust limit, and put it into the message as well. The size of the
             // server-requested dust limit was already sanity checked by this point.
             PaymentChannelClientState.IncrementedPayment payment = state().incrementPaymentBy(Coin.valueOf(minPayment), userKey);
-            Protos.UpdatePayment.Builder initialMsg = contractMsg.getInitialPaymentBuilder();
+            Protos.UpdatePayment.Builder initialMsg = Protos.UpdatePayment.newBuilder();
             initialMsg.setSignature(ByteString.copyFrom(payment.signature.encodeToFLO()));
             initialMsg.setClientChangeValue(state.getValueRefunded().value);
+            contractMsg.setInitialPayment(initialMsg);
         } catch (ValueOutOfRangeException e) {
             throw new IllegalStateException(e);  // This cannot happen.
         }
@@ -722,7 +724,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
                     increasePaymentFuture = null;
                     lock.unlock();
                 }
-            }, MoreExecutors.sameThreadExecutor());
+            }, MoreExecutors.directExecutor());
 
             conn.sendToServer(Protos.TwoWayChannelMessage.newBuilder()
                     .setUpdatePayment(updatePaymentBuilder)
