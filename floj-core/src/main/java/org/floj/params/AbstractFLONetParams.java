@@ -70,15 +70,29 @@ public abstract class AbstractFLONetParams extends NetworkParameters {
     public void checkDifficultyTransitions(final StoredBlock storedPrev, final Block nextBlock,
     	final BlockStore blockStore) throws VerificationException, BlockStoreException {
         Block prev = storedPrev.getHeader();
+        boolean useMaxTarget = false;
+
+        log.info("---->>");
+        log.info("Previous block height {}", storedPrev.getHeight());
+        log.info("Next block height {}" , (storedPrev.getHeight()+1));
+        log.info("Previous block time {}",  (prev.getTimeSeconds()));
+        log.info("Next block time {}",  (nextBlock.getTimeSeconds()));
+        long thresholdTime = (prev.getTimeSeconds()) + this.TargetTimespan(storedPrev.getHeight()+1)*2;
+        log.info("Threshold of previous block time plus 2 target timespans " + thresholdTime);
+        // Adjustment for Testnet from block 0 to block 1
+        if ((nextBlock.getTimeSeconds())  > (prev.getTimeSeconds() + (this.TargetTimespan(storedPrev.getHeight()+1)*2)) ) {
+            log.info("Set useMaxTarget = true");
+            useMaxTarget = true;
+        }
 
         // Is this supposed to be a difficulty transition point?
         if (!isDifficultyTransitionPoint(storedPrev)) {
-
             // No ... so check the difficulty didn't actually change.
-            if (nextBlock.getDifficultyTarget() != prev.getDifficultyTarget())
+            if (nextBlock.getDifficultyTarget() != prev.getDifficultyTarget()) {
                 throw new VerificationException("Unexpected change in difficulty at height " + storedPrev.getHeight() +
-                        ": " + Long.toHexString(nextBlock.getDifficultyTarget()) + " vs " +
-                        Long.toHexString(prev.getDifficultyTarget()));
+                    ": " + Long.toHexString(nextBlock.getDifficultyTarget()) + " vs " +
+                    Long.toHexString(prev.getDifficultyTarget()));
+            }
             return;
         }
 
@@ -111,8 +125,13 @@ public abstract class AbstractFLONetParams extends NetworkParameters {
             timespan = maxActualTimespan;
 
         BigInteger newTarget = Utils.decodeCompactBits(prev.getDifficultyTarget());
-        newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
-        newTarget = newTarget.divide(BigInteger.valueOf(this.TargetTimespan(nextHeight)));
+
+        if (useMaxTarget) {
+            newTarget = this.getMaxTarget();
+        } else {
+            newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
+            newTarget = newTarget.divide(BigInteger.valueOf(this.TargetTimespan(nextHeight)));
+        }
 
         if (newTarget.compareTo(this.getMaxTarget()) > 0) {
             log.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
